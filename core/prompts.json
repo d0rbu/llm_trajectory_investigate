@@ -1,0 +1,12 @@
+[
+    {
+        "type": ["knowledge", "capitals"],
+        "prompt": "Paris is the capital of ",
+        "answer": "France"
+    },
+    {
+        "type": ["reasoning", "math"],
+        "prompt": "I have two apples. You have three apples. Together, we have ",
+        "answer": "five"
+    }
+]
