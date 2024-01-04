@@ -1,15 +1,17 @@
 import os
+import json
 import yaml
 import torch as th
 import torch.nn as nn
 from core.prompts import get_prompts
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
+from hashlib import md5
 from typing import Iterable, Mapping
 
 
 def get_full_trajectory(
-    model: nn.Module,
-    tokenizer,
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
     prompt: Mapping[str, str | Iterable]
 ) -> th.Tensor:
     pass
@@ -17,17 +19,27 @@ def get_full_trajectory(
 def get_full_trajectories(
     model_name: str = "meta-llama/Llama-2-7b",
     output_dir: os.PathLike | str | None = None,
-    return_trajs: bool = True,
     prompt_types: Iterable[str] = [],
-) -> Iterable[Mapping] | None:
-    assert return_trajs or output_dir, "where to return the trajectories? please specify return_trajs or output_dir"
-
+) -> Iterable[Mapping]:
     model = AutoModelForCausalLM.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     prompts = get_prompts(prompt_types)
+    prompts_hash = int(md5(str.encode(json.dumps(prompts, sort_keys=True))).hexdigest(), 16)
 
-    trajectories = [get_full_trajectory(model, tokenizer, prompt) for prompt in prompts]
+    trajectories = [
+        {
+            "trajectory": get_full_trajectory(model, tokenizer, prompt),
+            "prompt": prompt,
+        } for prompt in prompts
+    ]
+
+    if output_dir:
+        output_path = os.path.join(output_dir, model_name, prompts_hash)
+        with open(output_path, "r", encoding="utf-8") as output_file:
+            json.dump(trajectories, output_file)
+
+    return trajectories
 
 
 CONFIG_DIR = os.path.join("experiment", "configs")
@@ -41,4 +53,4 @@ if __name__ == "__main__":
     else:
         experiment_config = {}
 
-    get_full_trajectories(output_dir="output", return_trajs=False, **experiment_config)
+    get_full_trajectories(output_dir="output", **experiment_config)
