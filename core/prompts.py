@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterable
+from typing import Iterable, Mapping
 
 
 PROMPT_TYPES = {
@@ -17,7 +17,7 @@ with open(PROMPTS_PATH, "r", encoding="utf-8") as prompts_file:
     full_prompts = json.load(prompts_file)
 
 
-def get_prompts(type_hierarchy: Iterable[str] = []):
+def get_prompts(type_hierarchy: Iterable[str] = []) -> Iterable[Mapping]:
     # check to make sure it is a valid type hierarchy
     current_types = PROMPT_TYPES
     for prompt_type in type_hierarchy:
