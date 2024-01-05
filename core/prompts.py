@@ -1,5 +1,6 @@
 import json
 import os
+from hashlib import md5
 from typing import Iterable, Mapping
 
 
@@ -17,7 +18,10 @@ with open(PROMPTS_PATH, "r", encoding="utf-8") as prompts_file:
     full_prompts = json.load(prompts_file)
 
 
-def get_prompts(type_hierarchy: Iterable[str] = []) -> Iterable[Mapping]:
+def get_prompts(
+    type_hierarchy: Iterable[str] = [],
+    return_hash: bool = False
+) -> Iterable[Mapping]:
     # check to make sure it is a valid type hierarchy
     current_types = PROMPT_TYPES
     for prompt_type in type_hierarchy:
@@ -32,5 +36,8 @@ def get_prompts(type_hierarchy: Iterable[str] = []) -> Iterable[Mapping]:
             prompt for prompt in current_prompts
             if len(prompt["type"]) > type_level and prompt["type"][type_level] == current_type
         ]
+
+    if return_hash:
+        return current_prompts, int(md5(str.encode(json.dumps(current_prompts, sort_keys=True))).hexdigest(), 16)
 
     return current_prompts

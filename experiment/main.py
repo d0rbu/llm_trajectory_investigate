@@ -3,7 +3,6 @@ import json
 import yaml
 import torch as th
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
-from hashlib import md5
 from typing import Iterable, Mapping
 from more_itertools import batched
 from core.prompts import get_prompts
@@ -15,19 +14,23 @@ def get_model_trajectories(
     prompts: Iterable[Mapping],
     batch_size: int = 16,
     only_final_token: bool = True,
-) -> Iterable[Mapping]:
+) -> Mapping[str, Iterable]:
     batched_prompts = batched(prompts, batch_size)
     expected_outputs = [tokenizer.encode(prompt["answer"])[0] for prompt in prompts]
     batched_expected_outputs = batched(expected_outputs, batch_size)
 
-    model_trajectories = []
+    model_trajectories = {
+        "trajectories": None,
+        "corrects": None,
+        "prompts": []
+    }
     with th.no_grad():
         for prompts, expected_outputs in zip(batched_prompts, batched_expected_outputs):
             prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts])
 
             model_output = model(prepared_prompts, output_hidden_states = True)
             chosen_outputs = th.argmax(model_output.logits[:, -1], dim=-1)
-            correct = chosen_outputs == th.tensor(expected_outputs)
+            corrects = chosen_outputs == th.tensor(expected_outputs)
 
             if only_final_token:
                 trajectories = [hidden_state[:, :-1] for hidden_state in model_output.hidden_states]  # (L, B, D)
@@ -35,13 +38,18 @@ def get_model_trajectories(
                 trajectories = model_output.hidden_states  # (L, B, T, D)
 
             trajectories = th.stack(trajectories, dim = 1)  # (B, L, [T], D)
-            model_trajectories.extend([
-                {
-                    "trajectory": trajectory,
-                    "correct": correct,
-                    **prompt,
-                } for prompt, trajectory in zip(prompts, trajectories)
-            ])
+            
+            if model_trajectories["trajectories"] is None:
+                model_trajectories["trajectories"] = trajectories
+            else:
+                model_trajectories["trajectories"] = th.cat(model_trajectories["trajectories"], trajectories, dim=0)
+            
+            if model_trajectories["corrects"] is None:
+                model_trajectories["corrects"] = corrects
+            else:
+                model_trajectories["corrects"] = th.cat(model_trajectories["corrects"], corrects, dim=0)
+
+            model_trajectories["prompts"].extend(prompts)
 
     return model_trajectories
 
@@ -52,17 +60,15 @@ def get_trajectories(
     batch_size: int = 16,
     only_final_token: bool = True,
 ) -> Iterable[Mapping]:
-    prompts = get_prompts(prompt_types)
-    prompts_hash = int(md5(str.encode(json.dumps(prompts, sort_keys=True))).hexdigest(), 16)
-    output_paths = [os.path.join(output_dir, model_name, prompts_hash, f"{model_name}.pt") for model_name in model_names]
+    prompts, prompts_hash = get_prompts(prompt_types, return_hash = True)
+    output_paths = [os.path.join(output_dir, prompts_hash, f"{model_name}.pt") for model_name in model_names]
     all_trajectories = {}
 
     for model_name, output_path in zip(model_names, output_paths):
         if os.path.exists(output_path):
             try:
                 print("Found cached trajectory, loading...")
-                with open(output_path, "r", encoding="utf-8") as output_file:
-                    all_trajectories[model_name] = th.load(output_file)
+                all_trajectories[model_name] = th.load(output_path)
 
                 continue
             except Exception as e:
@@ -82,8 +88,7 @@ def get_trajectories(
         all_trajectories[model_name] = model_trajectories
 
         if output_dir:
-            with open(output_path, "w", encoding="utf-8") as output_file:
-                th.save(model_trajectories, output_file)
+            th.save(model_trajectories, output_path)
 
     return all_trajectories
 
