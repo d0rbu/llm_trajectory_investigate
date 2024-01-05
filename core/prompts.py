@@ -23,7 +23,7 @@ def get_prompts(type_hierarchy: Iterable[str] = []) -> Iterable[Mapping]:
     for prompt_type in type_hierarchy:
         assert current_types is not True, f"went past maximum depth prompt type: {prompt_type}, from {type_hierarchy}"
         assert prompt_type in current_types, f"unexpected prompt type: {prompt_type}, from {type_hierarchy}"
-        current_types = PROMPT_TYPES[prompt_type]
+        current_types = current_types[prompt_type]
 
     current_prompts = full_prompts
 
