@@ -83,6 +83,9 @@ def visualize(
                     distance_from_end = len(token_trajectories) - 1 - token_idx
                     alpha = token_distance_modifier ** distance_from_end
                     plt.plot(trajectory[:, 0], trajectory[:, 1], color=adjusted_color, alpha=alpha)
+    
+    plt.title(f"token trajectory visualization")
+    plt.show()
 
 
 if __name__ == "__main__":
