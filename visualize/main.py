@@ -1,12 +1,25 @@
 import os
 import pathlib
 import torch as th
+import matplotlib.pyplot as plt
 from core.prompts import get_prompts
+from more_itertools import batched
+from typing import Iterable
 
+
+class ProjectionMethods:
+    @staticmethod
+    def pca(trajectories: th.Tensor) -> th.Tensor:
+        pass
+
+    @staticmethod
+    def tsne(trajectories: th.Tensor) -> th.Tensor:
+        pass
 
 def visualize(
-    output_dir = pathlib.Path("outputs"),
-    prompt_types = [["knowledge", "capitals"], ["reasoning", "math"]],
+    output_dir: str | os.PathLike = pathlib.Path("outputs"),
+    prompt_types: Iterable[Iterable[str]] = [["knowledge", "capitals"], ["reasoning", "math"]],
+    projection_method: str = "pca"
 ) -> None:
     for prompt_type in prompt_types:
         prompts, prompts_hash = get_prompts(prompt_type, return_hash=True)
@@ -29,7 +42,13 @@ def visualize(
         all_trajectories = th.cat(all_trajectories, dim=0)
         all_corrects = th.cat(all_corrects, dim=0)
 
-        # TODO: T-SNE/PCA trajectories, 2d plot them and connect them by num_prompts
+        projection_fn = getattr(ProjectionMethods, projection_method)
+        projected_trajectories = projection_fn(all_trajectories)
+
+        for model_name, model_trajectories, model_corrects in zip(model_name, batched(projected_trajectories, num_prompts), batched(all_corrects, num_prompts)):
+            for token_trajectories, correct in zip(model_trajectories, model_corrects):
+                for trajectory in token_trajectories:
+                    plt.plot(trajectory[:, 0], trajectory[:, 1])  # TODO: light/dark based on correct, alpha based on token distance from end
 
 
 if __name__ == "__main__":

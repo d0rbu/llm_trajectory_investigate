@@ -33,11 +33,11 @@ def get_model_trajectories(
             corrects = chosen_outputs == th.tensor(expected_outputs)
 
             if only_final_token:
-                trajectories = [hidden_state[:, :-1] for hidden_state in model_output.hidden_states]  # (L, B, D)
+                trajectories = [hidden_state[:, -1].unsqueeze(1) for hidden_state in model_output.hidden_states]  # (L, B, 1, D)
             else:
                 trajectories = model_output.hidden_states  # (L, B, T, D)
 
-            trajectories = th.stack(trajectories, dim = 1)  # (B, L, [T], D)
+            trajectories = th.stack(trajectories, dim = 2)  # (B, T, L, D)
             
             if model_trajectories["trajectories"] is None:
                 model_trajectories["trajectories"] = trajectories
