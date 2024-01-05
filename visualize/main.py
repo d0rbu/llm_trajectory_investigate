@@ -17,18 +17,24 @@ class ProjectionMethods:
     ) -> None:
         self.projection_dim = dim
 
-    def pca(self, trajectories: th.Tensor) -> th.Tensor:
+    def pca(self, trajectories: th.Tensor) -> tuple[th.Tensor, th.Tensor | None]:
         flattened_trajs = trajectories.view(-1, trajectories.shape[-1])
 
         U, S, V = th.pca_lowrank(flattened_trajs, center=False)
+        total_variance = S.sum()
+        explained_variances = S / total_variance
         projected_trajs = flattened_trajs @ V[:, :self.projection_dim]
+        projected_trajs = projected_trajs.view(*trajectories.shape)
 
-        return projected_trajs
+        return projected_trajs, explained_variances[:self.projection_dim]
 
-    def tsne(self, trajectories: th.Tensor, perplexity: int = 30, n_iter: int = 1000) -> th.Tensor:
+    def tsne(self, trajectories: th.Tensor, perplexity: int = 30, n_iter: int = 1000) -> tuple[th.Tensor, th.Tensor | None]:
         flattened_trajs = trajectories.view(-1, trajectories.shape[-1])
 
-        return tsne(n_components=self.projection_dim, perplexity=perplexity, n_iter = n_iter).fit_transform(flattened_trajs)
+        projected_trajs = tsne(n_components=self.projection_dim, perplexity=perplexity, n_iter = n_iter).fit_transform(flattened_trajs)
+        projected_trajs = projected_trajs.view(*trajectories.shape)
+
+        return projected_trajs, None
 
 def visualize(
     output_dir: str | os.PathLike = pathlib.Path("outputs"),
@@ -61,7 +67,7 @@ def visualize(
         all_corrects = th.cat(all_corrects, dim=0)
 
         projection_fn = getattr(projection_methods, projection_method)
-        projected_trajectories = projection_fn(all_trajectories)
+        projected_trajectories, explained_variances = projection_fn(all_trajectories)
 
         cmap = cmaps[color_map_name]
         color_points = th.linspace(0, 1, len(all_models) + 1)[:-1]
@@ -84,8 +90,11 @@ def visualize(
                     alpha = token_distance_modifier ** distance_from_end
                     plt.plot(trajectory[:, 0], trajectory[:, 1], color=adjusted_color, alpha=alpha)
     
-    plt.title(f"token trajectory visualization")
-    plt.show()
+        plt.title(f"token trajectory visualization")
+        if explained_variances is not None:
+            plt.xlabel(f"explained variance: {explained_variances[0]}")
+            plt.ylabel(f"explained variance: {explained_variances[1]}")
+        plt.show()
 
 
 if __name__ == "__main__":
