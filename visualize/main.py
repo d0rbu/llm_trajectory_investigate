@@ -36,6 +36,19 @@ class ProjectionMethods:
 
         return projected_trajs, None
 
+
+def plot_token_trajectories(
+    token_trajectories: th.Tensor,
+    color: tuple[float, float, float],
+    model_name: str,
+    token_distance_modifier: float = 0.5,
+    token_average_modifier: float = 0.5,
+) -> None:
+    for token_idx, trajectory in enumerate(token_trajectories):
+        distance_from_end = len(token_trajectories) - 1 - token_idx
+        alpha = token_average_modifier * (token_distance_modifier ** distance_from_end)
+        plt.plot(trajectory[:, 0], trajectory[:, 1], color=color, alpha=alpha, label=model_name)
+
 def visualize(
     output_dir: str | os.PathLike = pathlib.Path("outputs"),
     prompt_types: Iterable[Iterable[str]] = [["knowledge", "capitals"], ["reasoning", "math"]],
@@ -43,6 +56,7 @@ def visualize(
     color_map_name: str = "hsv",
     incorrect_answer_modifier: float = 0.5,  # make incorrect trajectories half as bright
     token_distance_modifier: float = 0.5,  # make the second from last token half as opaque, third from last a quarter as opaque, etc.
+    token_average_modifier: float = 0.5,  # make each trajectory half as opaque, show the average at full opacity
 ) -> None:
     projection_methods = ProjectionMethods(dim=2)
     for prompt_type in prompt_types:
@@ -50,7 +64,7 @@ def visualize(
         num_prompts = len(prompts)
         prompts_results_dir = os.path.join(output_dir, prompts_hash)
 
-        if not os.path.exists(prompts_results_dir) or not os.path.isdir(prompts_results_dir)
+        if not os.path.exists(prompts_results_dir) or not os.path.isdir(prompts_results_dir):
             print(f"Results directory for prompt type {prompt_type} does not exist")
             continue
 
@@ -83,17 +97,30 @@ def visualize(
                 adjusted_color = mpl.colors.rgb_to_hsv(color)
                 if not correct:
                     adjusted_color[-1] *= incorrect_answer_modifier
-                
+
                 adjusted_color = mpl.colors.hsv_to_rgb(adjusted_color)
-                for token_idx, trajectory in enumerate(token_trajectories):
-                    distance_from_end = len(token_trajectories) - 1 - token_idx
-                    alpha = token_distance_modifier ** distance_from_end
-                    plt.plot(trajectory[:, 0], trajectory[:, 1], color=adjusted_color, alpha=alpha)
-    
+                plot_token_trajectories(
+                    token_trajectories,
+                    adjusted_color,
+                    token_distance_modifier,
+                    token_average_modifier,
+                    model_name,
+                )
+
+            average_trajectories = model_trajectories.mean(dim=0)  # (T, L, 2)
+            plot_token_trajectories(
+                average_trajectories,
+                adjusted_color,
+                token_distance_modifier,
+                token_average_modifier,
+                model_name,
+            )
+
         plt.title(f"token trajectory visualization")
         if explained_variances is not None:
             plt.xlabel(f"explained variance: {explained_variances[0]}")
             plt.ylabel(f"explained variance: {explained_variances[1]}")
+        plt.legend(handles=colors)
         plt.show()
 
 
