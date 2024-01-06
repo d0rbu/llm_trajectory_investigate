@@ -26,6 +26,9 @@ class ProjectionMethods:
         projected_trajs = flattened_trajs @ V[:, :self.projection_dim]
         projected_trajs = projected_trajs.view(*trajectories.shape)
 
+        print(f"explained variances: {explained_variances}")
+        print(f"explained variances cumsum: {explained_variances.cumsum()}")
+
         return projected_trajs, explained_variances[:self.projection_dim]
 
     def tsne(self, trajectories: th.Tensor, perplexity: int = 30, n_iter: int = 1000) -> tuple[th.Tensor, th.Tensor | None]:
@@ -53,6 +56,7 @@ def visualize(
     output_dir: str | os.PathLike = pathlib.Path("outputs"),
     prompt_types: Iterable[Iterable[str]] = [["knowledge", "capitals"], ["reasoning", "math"]],
     projection_method: str = "pca",
+    reorder: bool = False,  # whether to permute the activations to try and be more similar
     color_map_name: str = "hsv",
     incorrect_answer_modifier: float = 0.5,  # make incorrect trajectories half as bright
     token_distance_modifier: float = 0.5,  # make the second from last token half as opaque, third from last a quarter as opaque, etc.
@@ -78,6 +82,8 @@ def visualize(
             all_models.append(results_path.stem)
         
         all_trajectories = th.cat(all_trajectories, dim=0)
+        if reorder:
+            all_trajectories = all_trajectories.sort(dim=-1, descending=True)
         all_corrects = th.cat(all_corrects, dim=0)
 
         projection_fn = getattr(projection_methods, projection_method)
