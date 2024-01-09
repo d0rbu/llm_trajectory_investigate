@@ -26,7 +26,7 @@ def get_model_trajectories(
     }
     with th.no_grad():
         for prompts, expected_outputs in zip(batched_prompts, batched_expected_outputs):
-            prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts])
+            prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts], return_tensors="pt", padding=True)
 
             model_output = model(**prepared_prompts, output_hidden_states = True)
             chosen_outputs = th.argmax(model_output.logits[:, -1], dim=-1)
