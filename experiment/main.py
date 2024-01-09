@@ -77,7 +77,7 @@ def get_trajectories(
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         print("Loading model and tokenizer")
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         if tokenizer.pad_token is None:

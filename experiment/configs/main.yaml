@@ -1,9 +1,9 @@
 model_names: 
   - "meta-llama/Llama-2-7b-hf"
-  - "microsoft/Orca-2-13b"
   - "upstage/SOLAR-10.7B-v1.0"
   - "meta-llama/Llama-2-13b-hf"
-  - "meta-llama/Llama-2-70b-hf"
+  - "microsoft/Orca-2-13b"
+  # - "meta-llama/Llama-2-70b-hf"
   - "mistralai/Mistral-7B-v0.1"
   - "HuggingFaceH4/zephyr-7b-beta"
   
