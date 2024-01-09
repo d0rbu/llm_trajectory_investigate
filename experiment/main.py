@@ -73,6 +73,8 @@ def get_trajectories(
                 continue
             except Exception as e:
                 print(f"Issue loading cached trajectory: {e}")
+        else:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         print("Loading model and tokenizer")
         model = AutoModelForCausalLM.from_pretrained(model_name)
