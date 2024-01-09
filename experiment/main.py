@@ -28,7 +28,7 @@ def get_model_trajectories(
         for prompts, expected_outputs in zip(batched_prompts, batched_expected_outputs):
             prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts])
 
-            model_output = model(prepared_prompts, output_hidden_states = True)
+            model_output = model(**prepared_prompts, output_hidden_states = True)
             chosen_outputs = th.argmax(model_output.logits[:, -1], dim=-1)
             corrects = chosen_outputs == th.tensor(expected_outputs)
 
