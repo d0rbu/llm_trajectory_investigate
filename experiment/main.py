@@ -61,7 +61,7 @@ def get_trajectories(
     only_final_token: bool = True,
 ) -> Iterable[Mapping]:
     prompts, prompts_hash = get_prompts(prompt_types, return_hash = True)
-    output_paths = [os.path.join(output_dir, prompts_hash, f"{model_name}.pt") for model_name in model_names]
+    output_paths = [os.path.join(output_dir, str(prompts_hash), f"{model_name}.pt") for model_name in model_names]
     all_trajectories = {}
 
     for model_name, output_path in zip(model_names, output_paths):
