@@ -26,7 +26,7 @@ def get_model_trajectories(
     }
     with th.no_grad():
         for prompts, expected_outputs in zip(batched_prompts, batched_expected_outputs):
-            prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts], return_tensors="pt", padding=True)
+            prepared_prompts = tokenizer([prompt["prompt"] for prompt in prompts], return_tensors="pt", padding=True, return_token_type_ids=False)
 
             model_output = model(**prepared_prompts, output_hidden_states = True)
             chosen_outputs = th.argmax(model_output.logits[:, -1], dim=-1)
@@ -79,7 +79,7 @@ def get_trajectories(
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         if tokenizer.pad_token is None:
-            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+            tokenizer.pad_token = tokenizer.eos_token
 
         model_trajectories = get_model_trajectories(
             model = model,
