@@ -76,7 +76,7 @@ def visualize(
         all_trajectories = []
         all_corrects = []
         all_models = []
-        for results_path in glob.glob(os.path.join(prompts_results_dir, "*.pt"), recursive=True):
+        for results_path in glob.iglob(os.path.join(prompts_results_dir, "*.pt"), recursive=True):
             model_trajectories = th.load(results_path)
             all_trajectories.append(model_trajectories["trajectories"])
             all_corrects.append(model_trajectories["corrects"])
