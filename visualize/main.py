@@ -1,5 +1,6 @@
 import os
 import pathlib
+import glob
 import torch as th
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -75,7 +76,7 @@ def visualize(
         all_trajectories = []
         all_corrects = []
         all_models = []
-        for results_path in pathlib.Path(prompts_results_dir).iterdir():
+        for results_path in glob.glob(os.path.join(prompts_results_dir, "*.pt"), recursive=True):
             model_trajectories = th.load(results_path)
             all_trajectories.append(model_trajectories["trajectories"])
             all_corrects.append(model_trajectories["corrects"])
