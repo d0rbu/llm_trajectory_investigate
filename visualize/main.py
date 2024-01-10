@@ -55,7 +55,7 @@ def plot_token_trajectories(
 
 def visualize(
     output_dir: str | os.PathLike = pathlib.Path("outputs"),
-    prompt_types: Iterable[Iterable[str]] = [["knowledge", "capitals"], ["reasoning", "math"]],
+    prompt_types: Iterable[Iterable[str]] = [[]],
     projection_method: str = "pca",
     reorder: bool = False,  # whether to permute the activations to try and be more similar
     color_map_name: str = "hsv",
@@ -67,7 +67,7 @@ def visualize(
     for prompt_type in prompt_types:
         prompts, prompts_hash = get_prompts(prompt_type, return_hash=True)
         num_prompts = len(prompts)
-        prompts_results_dir = os.path.join(output_dir, prompts_hash)
+        prompts_results_dir = os.path.join(output_dir, str(prompts_hash))
 
         if not os.path.exists(prompts_results_dir) or not os.path.isdir(prompts_results_dir):
             print(f"Results directory for prompt type {prompt_type} does not exist")
@@ -76,7 +76,7 @@ def visualize(
         all_trajectories = []
         all_corrects = []
         all_models = []
-        for results_path in glob.iglob(os.path.join(prompts_results_dir, "*.pt"), recursive=True):
+        for results_path in glob.iglob(os.path.join(prompts_results_dir, "*", "*.pt"), recursive=True):
             model_trajectories = th.load(results_path)
             all_trajectories.append(model_trajectories["trajectories"])
             all_corrects.append(model_trajectories["corrects"])
