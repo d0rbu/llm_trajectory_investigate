@@ -101,7 +101,7 @@ def plot_token_trajectories(
     
     return handles
 
-def visualize(
+def visualize_trajectories(
     output_dir: str | os.PathLike = pathlib.Path("outputs"),
     prompt_types: Iterable[Iterable[str]] = [[]],
     projection_method: str = "pca",
@@ -131,7 +131,7 @@ def visualize(
             results_path = pathlib.Path(results_path)
             full_model_name = f"{results_path.parent.name}/{results_path.stem}"
             all_models.append(full_model_name)
-        
+
         batched_data = batch_by_trajectory_dim(all_trajectories, all_corrects, all_models, separate_models, dim=-1)
         if reorder:
             for data in batched_data.values():
@@ -188,5 +188,12 @@ def visualize(
             plt.show()
 
 
+def visualize_hidden_deltas(
+    output_dir: str | os.PathLike = pathlib.Path("outputs"),
+    prompt_types: Iterable[Iterable[str]] = [[]],
+) -> None:
+    pass
+
+
 if __name__ == "__main__":
-    visualize()
+    visualize_trajectories()

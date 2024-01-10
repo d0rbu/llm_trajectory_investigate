@@ -6,4 +6,5 @@ model_names:
   - "meta-llama/Llama-2-70b-hf"
   - "mistralai/Mistral-7B-v0.1"
   - "HuggingFaceH4/zephyr-7b-beta"
+only_final_token: false
   
