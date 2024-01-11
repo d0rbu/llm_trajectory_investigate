@@ -254,6 +254,7 @@ def visualize_hidden_deltas(
     reorder: bool = False,  # whether to permute the activations to try and be more similar
     separate_models: bool = True,  # whether to plot each model separately
     colormap_name: str = "hot",
+    colormap_limits: tuple[float, float] | None = None,
     only_final_token: bool = True,
     last_n_tokens: int = 4,  # if only_final_token is False, how many tokens to plot
 ) -> None:
@@ -305,7 +306,8 @@ def visualize_hidden_deltas(
                 plt.title(f"{model_name} average {metric} between hidden state deltas, {model_trajectories.shape[0]} layers")
                 plt.xticks(delta_distance_ticks)
                 plt.yticks(delta_distance_ticks)
-                plt.clim(0, 40)
+                if colormap_limits is not None:
+                    plt.clim(*colormap_limits)
                 plt.colorbar()
                 plt.set_cmap(colormap_name)
                 plt.show()
@@ -314,5 +316,6 @@ def visualize_hidden_deltas(
 if __name__ == "__main__":
     # visualize_trajectories(only_final_token=False)
     visualize_hidden_deltas(
-        only_final_token=False
+        metric="cosine",
+        only_final_token=False,
     )
